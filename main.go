@@ -40,7 +40,7 @@ func printUsage() {
 	log.Fatalln(`usage:
 
   domroute keep <DOMAIN> <GATEWAY>
-  domroute remove <DOMAIN> <GATEWAY>`)
+  domroute delete <DOMAIN> <GATEWAY>`)
 }
 
 func keepEntry(domain string, gateway net.IP) {
