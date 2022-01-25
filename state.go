@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 )
@@ -40,6 +41,20 @@ func readRoutes() ([]route, error) {
 	}
 	log.Printf("loaded %d existing routes from state", len(routes))
 	return routes, nil
+}
+
+func readRoutesForDomain(domain string, gateway net.IP) ([]route, error) {
+	routes, err := readRoutes()
+	if err != nil {
+		return nil, err
+	}
+	var matched []route
+	for _, r := range routes {
+		if r.Domain == domain && r.Gateway == gateway.String() {
+			matched = append(matched, r)
+		}
+	}
+	return matched, nil
 }
 
 func recordRoute(domain string, ip string, gateway string) error {

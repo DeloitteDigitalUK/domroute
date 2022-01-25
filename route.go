@@ -32,9 +32,9 @@ func ensureRoute(domain string, gateway net.IP) {
 	}
 
 	deprecated, err := findDeprecated(domain, gateway, ips)
-	log.Printf("found %d deprecated routes", len(deprecated))
+	log.Printf("found %d deprecated routes to remove", len(deprecated))
 	for _, deprecated := range deprecated {
-		err := deleteRoute(domain, deprecated, gateway.String())
+		err := deleteRouteIfExists(domain, deprecated, gateway.String())
 		if err != nil {
 			log.Printf("failed to delete route: %s->%s", deprecated, gateway)
 			continue
@@ -94,11 +94,24 @@ func createRoute(domain string, ip string, gateway string) error {
 	return nil
 }
 
+func deleteRouteIfExists(domain string, ip string, gateway string) error {
+	exists, err := routeExists(ip, gateway)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return deleteRoute(domain, ip, gateway)
+	} else {
+		log.Printf("route %s->%s does not exist", ip, gateway)
+	}
+	return nil
+}
+
 func deleteRoute(domain string, ip string, gateway string) error {
 	log.Printf("deleting route %v->%v", ip, gateway)
 	cmd := exec.Command("route", "-n", "delete", "-net", ip+"/32", gateway)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to delete route %s->%s %v: %s", ip, gateway, cmd.Path, err)
+		return fmt.Errorf("failed to delete route %s->%s %s: %s", ip, gateway, cmd.Path, err)
 	}
 	log.Printf("deleted route %v->%v", ip, gateway)
 

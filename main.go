@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -22,12 +21,16 @@ func main() {
 	domain := os.Args[2]
 
 	switch action {
-	case "keep":
-		keepEntry(domain, gateway)
+	case "add":
+		addEntry(domain, gateway)
 		break
 
 	case "delete":
 		deleteEntry(domain, gateway)
+		break
+
+	case "keep":
+		keepEntry(domain, gateway)
 		break
 
 	default:
@@ -39,8 +42,13 @@ func main() {
 func printUsage() {
 	log.Fatalln(`usage:
 
-  domroute keep <DOMAIN> <GATEWAY>
-  domroute delete <DOMAIN> <GATEWAY>`)
+  domroute add <DOMAIN> <GATEWAY>
+  domroute delete <DOMAIN> <GATEWAY>
+  domroute keep <DOMAIN> <GATEWAY>`)
+}
+
+func addEntry(domain string, gateway net.IP) {
+	ensureRoute(domain, gateway)
 }
 
 func keepEntry(domain string, gateway net.IP) {
@@ -62,17 +70,30 @@ func keepEntry(domain string, gateway net.IP) {
 }
 
 func deleteEntry(domain string, gateway net.IP) {
+	routes, err := readRoutesForDomain(domain, gateway)
+	if err != nil {
+		log.Printf("failed to load existing entries from state: %s", err)
+	} else {
+		log.Printf("found %d existing entries in state", len(routes))
+		for _, e := range routes {
+			deleteGatewayEntry(domain, gateway, e.Ip)
+		}
+	}
+
 	ips, err := net.LookupIP(domain)
 	if err != nil {
-		log.Fatalln(fmt.Errorf("failed to resolve domain: " + domain))
-	}
-	log.Printf("resolved %s to %s", domain, ips)
-
-	for _, ip := range ips {
-		err := deleteRoute(domain, ip.String(), gateway.String())
-		if err != nil {
-			log.Printf("failed to delete route: %s->%s", ip.String(), gateway)
-			continue
+		log.Println("failed to resolve domain: " + domain)
+	} else {
+		log.Printf("resolved %s to %s", domain, ips)
+		for _, ip := range ips {
+			deleteGatewayEntry(domain, gateway, ip.String())
 		}
+	}
+}
+
+func deleteGatewayEntry(domain string, gateway net.IP, ip string) {
+	err := deleteRouteIfExists(domain, ip, gateway.String())
+	if err != nil {
+		log.Printf("failed to delete route: %s->%s", ip, gateway)
 	}
 }
