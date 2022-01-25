@@ -44,7 +44,10 @@ func printUsage() {
 }
 
 func keepEntry(domain string, gateway net.IP) {
-	ticker := time.NewTicker(5 * time.Second)
+	checkInterval := getCheckInterval()
+	log.Printf("keeping %s routed to %s - checking every %v seconds", domain, gateway.String(), checkInterval.Seconds())
+
+	ticker := time.NewTicker(checkInterval)
 	done := make(chan bool)
 
 	ensureRoute(domain, gateway)
