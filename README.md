@@ -1,6 +1,6 @@
 # domroute
 
-Keep route table up to date for a domain.
+Keeps the route table up to date for a domain's IP addresses.
 
 ## Install
 
@@ -9,8 +9,9 @@ Keep route table up to date for a domain.
 ## Usage:
 
 ```
-domroute keep <DOMAIN> <GATEWAY>
+domroute add <DOMAIN> <GATEWAY>
 domroute delete <DOMAIN> <GATEWAY>
+domroute keep <DOMAIN> <GATEWAY>
 ```
 
 ## Add route for a domain

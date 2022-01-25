@@ -1,4 +1,4 @@
-package main
+package state
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ type route struct {
 	Gateway string `json:"gateway"`
 }
 
-func readRoutes() ([]route, error) {
+func readAllRoutes() ([]route, error) {
 	stateFile, err := getStateFilePath()
 	if err != nil {
 		return nil, err
@@ -43,8 +43,8 @@ func readRoutes() ([]route, error) {
 	return routes, nil
 }
 
-func readRoutesForDomain(domain string, gateway net.IP) ([]route, error) {
-	routes, err := readRoutes()
+func ReadRoutesForDomain(domain string, gateway net.IP) ([]route, error) {
+	routes, err := readAllRoutes()
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +57,9 @@ func readRoutesForDomain(domain string, gateway net.IP) ([]route, error) {
 	return matched, nil
 }
 
-func recordRoute(domain string, ip string, gateway string) error {
+func RecordRoute(domain string, ip string, gateway string) error {
 	entry := route{Domain: domain, Ip: ip, Gateway: gateway}
-	routes, err := readRoutes()
+	routes, err := readAllRoutes()
 	if err != nil {
 		return err
 	}
@@ -67,8 +67,8 @@ func recordRoute(domain string, ip string, gateway string) error {
 	return writeStateFile(routes)
 }
 
-func removeRecordedRoute(domain string, ip string, gateway string) error {
-	routes, err := readRoutes()
+func RemoveRecordedRoute(domain string, ip string, gateway string) error {
+	routes, err := readAllRoutes()
 	if err != nil {
 		return err
 	}

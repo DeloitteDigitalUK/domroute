@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/pcornish/domroute/route"
+	"github.com/pcornish/domroute/state"
 	"log"
 	"net"
 	"os"
@@ -48,7 +50,7 @@ func printUsage() {
 }
 
 func addEntry(domain string, gateway net.IP) {
-	ensureRoute(domain, gateway)
+	route.EnsureExists(domain, gateway)
 }
 
 func keepEntry(domain string, gateway net.IP) {
@@ -58,19 +60,19 @@ func keepEntry(domain string, gateway net.IP) {
 	ticker := time.NewTicker(checkInterval)
 	done := make(chan bool)
 
-	ensureRoute(domain, gateway)
+	route.EnsureExists(domain, gateway)
 	for {
 		select {
 		case <-done:
 			return
 		case <-ticker.C:
-			ensureRoute(domain, gateway)
+			route.EnsureExists(domain, gateway)
 		}
 	}
 }
 
 func deleteEntry(domain string, gateway net.IP) {
-	routes, err := readRoutesForDomain(domain, gateway)
+	routes, err := state.ReadRoutesForDomain(domain, gateway)
 	if err != nil {
 		log.Printf("failed to load existing entries from state: %s", err)
 	} else {
@@ -92,7 +94,7 @@ func deleteEntry(domain string, gateway net.IP) {
 }
 
 func deleteGatewayEntry(domain string, gateway net.IP, ip string) {
-	err := deleteRouteIfExists(domain, ip, gateway.String())
+	err := route.DeleteIfExists(domain, ip, gateway.String())
 	if err != nil {
 		log.Printf("failed to delete route: %s->%s", ip, gateway)
 	}

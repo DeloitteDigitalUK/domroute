@@ -1,14 +1,16 @@
-package main
+package route
 
 import (
 	"fmt"
+	"github.com/pcornish/domroute/state"
+
 	"log"
 	"net"
 	"os/exec"
 	"strings"
 )
 
-func ensureRoute(domain string, gateway net.IP) {
+func EnsureExists(domain string, gateway net.IP) {
 	ips, err := net.LookupIP(domain)
 	if err != nil {
 		log.Fatalln(fmt.Errorf("failed to resolve domain: " + domain))
@@ -34,7 +36,7 @@ func ensureRoute(domain string, gateway net.IP) {
 	deprecated, err := findDeprecated(domain, gateway, ips)
 	log.Printf("found %d deprecated routes to remove", len(deprecated))
 	for _, deprecated := range deprecated {
-		err := deleteRouteIfExists(domain, deprecated, gateway.String())
+		err := DeleteIfExists(domain, deprecated, gateway.String())
 		if err != nil {
 			log.Printf("failed to delete route: %s->%s", deprecated, gateway)
 			continue
@@ -43,23 +45,21 @@ func ensureRoute(domain string, gateway net.IP) {
 }
 
 func findDeprecated(domain string, gateway net.IP, ips []net.IP) ([]string, error) {
-	routes, err := readRoutes()
+	routes, err := state.ReadRoutesForDomain(domain, gateway)
 	if err != nil {
 		return nil, err
 	}
 	var deprecated []string
 	for _, existing := range routes {
-		if existing.Domain == domain && existing.Gateway == gateway.String() {
-			found := false
-			for _, ip := range ips {
-				if existing.Ip == ip.String() {
-					found = true
-					break
-				}
+		found := false
+		for _, ip := range ips {
+			if existing.Ip == ip.String() {
+				found = true
+				break
 			}
-			if !found {
-				deprecated = append(deprecated, existing.Ip)
-			}
+		}
+		if !found {
+			deprecated = append(deprecated, existing.Ip)
 		}
 	}
 	return deprecated, nil
@@ -87,14 +87,14 @@ func createRoute(domain string, ip string, gateway string) error {
 	}
 	log.Printf("created route %v->%v", ip, gateway)
 
-	err := recordRoute(domain, ip, gateway)
+	err := state.RecordRoute(domain, ip, gateway)
 	if err != nil {
 		return fmt.Errorf("unable to record route %s->%s in state file: %s", ip, gateway, err)
 	}
 	return nil
 }
 
-func deleteRouteIfExists(domain string, ip string, gateway string) error {
+func DeleteIfExists(domain string, ip string, gateway string) error {
 	exists, err := routeExists(ip, gateway)
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func deleteRoute(domain string, ip string, gateway string) error {
 	}
 	log.Printf("deleted route %v->%v", ip, gateway)
 
-	err := removeRecordedRoute(domain, ip, gateway)
+	err := state.RemoveRecordedRoute(domain, ip, gateway)
 	if err != nil {
 		return fmt.Errorf("unable to delete recorded route %s->%s from state file: %s", ip, gateway, err)
 	}
