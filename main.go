@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"github.com/pcornish/domroute/route"
 	"github.com/pcornish/domroute/state"
 	"log"
 	"net"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -14,9 +17,11 @@ func main() {
 		printUsage()
 	}
 
-	gateway := net.ParseIP(os.Args[3])
-	if nil == gateway {
-		log.Fatalln("could not parse gateway IP: " + os.Args[2])
+	gateway, err := getGatewayAddr(os.Args[3])
+	if err != nil {
+		log.Fatalf("could not parse gateway: %s", err)
+	} else if nil == gateway {
+		log.Fatalln("could not parse gateway: " + os.Args[3])
 	}
 
 	action := os.Args[1]
@@ -44,9 +49,42 @@ func main() {
 func printUsage() {
 	log.Fatalln(`usage:
 
-  domroute add <DOMAIN> <GATEWAY>
-  domroute delete <DOMAIN> <GATEWAY>
-  domroute keep <DOMAIN> <GATEWAY>`)
+  domroute add <DOMAIN> <GATEWAY_IP>
+  domroute add <DOMAIN> <INTERFACE_NAME>
+
+  domroute delete <DOMAIN> <GATEWAY_IP>
+  domroute delete <DOMAIN> <INTERFACE_NAME>
+
+  domroute keep <DOMAIN> <GATEWAY_IP>
+  domroute keep <DOMAIN> <INTERFACE_NAME>`)
+}
+
+func getGatewayAddr(ipOrIface string) (net.IP, error) {
+	if matched, _ := regexp.MatchString(`^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$`, ipOrIface); matched {
+		return net.ParseIP(ipOrIface), nil
+	}
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, fmt.Errorf("could not list network interfaces: %s", err)
+	}
+	for _, iface := range interfaces {
+		if iface.Name != ipOrIface {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get addresses for interface: %s: %s", iface.Name, err)
+		} else if len(addrs) == 0 {
+			return nil, fmt.Errorf("no addresses for interface: %s", iface.Name)
+		}
+		ip := addrs[0].String()
+		if strings.Contains(ip, "/") {
+			ip = strings.Split(ip, "/")[0]
+		}
+		log.Printf("resolved gateway interface %s to %s", ipOrIface, ip)
+		return net.ParseIP(ip), nil
+	}
+	return nil, fmt.Errorf("failed to resolve gateway: %s", ipOrIface)
 }
 
 func addEntry(domain string, gateway net.IP) {

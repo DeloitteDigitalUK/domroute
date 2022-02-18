@@ -9,9 +9,14 @@ Keeps the route table up to date for a domain's IP addresses.
 ## Usage:
 
 ```
-domroute add <DOMAIN> <GATEWAY>
-domroute delete <DOMAIN> <GATEWAY>
-domroute keep <DOMAIN> <GATEWAY>
+domroute add <DOMAIN> <GATEWAY_IP>
+domroute add <DOMAIN> <INTERFACE_NAME>
+
+domroute delete <DOMAIN> <GATEWAY_IP>
+domroute delete <DOMAIN> <INTERFACE_NAME>
+
+domroute keep <DOMAIN> <GATEWAY_IP>
+domroute keep <DOMAIN> <INTERFACE_NAME>
 ```
 
 ## Add route for a domain
