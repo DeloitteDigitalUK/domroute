@@ -19,7 +19,7 @@ func GetCheckInterval() time.Duration {
 	checkInterval := os.Getenv("CHECK_INTERVAL")
 
 	if checkInterval == "" {
-		return 30 * time.Second
+		return 60 * time.Second
 	} else {
 		interval, err := strconv.Atoi(checkInterval)
 		if err != nil {
