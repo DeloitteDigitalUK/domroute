@@ -17,6 +17,8 @@ domroute delete <DOMAIN> <INTERFACE_NAME>
 
 domroute keep <DOMAIN> <GATEWAY_IP>
 domroute keep <DOMAIN> <INTERFACE_NAME>
+
+domroute cleanup
 ```
 
 ## Add route for a domain
@@ -59,6 +61,17 @@ Resolves a domain to one or more IP addresses, then removes each IP/gateway comb
 $ sudo domroute delete example.com 10.0.0.1
 
 2022/01/25 14:37:41 resolved example.com to [34.117.59.81]
+2022/01/25 14:37:41 deleting route 34.117.59.81->10.0.0.1
+2022/01/25 14:37:41 deleted route 34.117.59.81->10.0.0.1
+```
+
+## Delete all previously added routes
+
+Removes all routes previously added to the route table by this tool.
+
+```
+$ sudo domroute cleanup
+
 2022/01/25 14:37:41 deleting route 34.117.59.81->10.0.0.1
 2022/01/25 14:37:41 deleted route 34.117.59.81->10.0.0.1
 ```

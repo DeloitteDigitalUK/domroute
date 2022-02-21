@@ -16,7 +16,7 @@ type route struct {
 	Gateway string `json:"gateway"`
 }
 
-func readAllRoutes() ([]route, error) {
+func ReadAllRoutes() ([]route, error) {
 	stateFile, err := getStateFilePath()
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func readAllRoutes() ([]route, error) {
 	file, err := os.Open(stateFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("no existing routes in state")
+			log.Debugf("no existing routes in state")
 			return []route{}, nil
 		} else {
 			return nil, fmt.Errorf("failed to open state file: %s: %s", stateFile, err)
@@ -39,12 +39,12 @@ func readAllRoutes() ([]route, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshall state file: %s: %s", stateFile, err)
 	}
-	log.Printf("loaded %d existing routes from state", len(routes))
+	log.Tracef("loaded %d routes from state", len(routes))
 	return routes, nil
 }
 
 func ReadRoutesForDomain(domain string, gateway net.IP) ([]route, error) {
-	routes, err := readAllRoutes()
+	routes, err := ReadAllRoutes()
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func ReadRoutesForDomain(domain string, gateway net.IP) ([]route, error) {
 
 func RecordRoute(domain string, ip string, gateway string) error {
 	entry := route{Domain: domain, Ip: ip, Gateway: gateway}
-	routes, err := readAllRoutes()
+	routes, err := ReadAllRoutes()
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func RecordRoute(domain string, ip string, gateway string) error {
 }
 
 func RemoveRecordedRoute(domain string, ip string, gateway string) error {
-	routes, err := readAllRoutes()
+	routes, err := ReadAllRoutes()
 	if err != nil {
 		return err
 	}
@@ -82,6 +82,10 @@ func RemoveRecordedRoute(domain string, ip string, gateway string) error {
 	}
 
 	return writeStateFile(r)
+}
+
+func RemoveAllRoutes() error {
+	return writeStateFile([]route{})
 }
 
 func getStateFilePath() (string, error) {

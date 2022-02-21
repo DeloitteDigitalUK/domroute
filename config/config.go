@@ -1,12 +1,21 @@
-package main
+package config
 
 import (
+	"github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"time"
 )
 
-func getCheckInterval() time.Duration {
+func InitLogger() {
+	level, _ := logrus.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if level == 0 {
+		level = logrus.DebugLevel
+	}
+	logrus.SetLevel(level)
+}
+
+func GetCheckInterval() time.Duration {
 	checkInterval := os.Getenv("CHECK_INTERVAL")
 
 	if checkInterval == "" {
