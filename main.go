@@ -11,7 +11,7 @@ import (
 func main() {
 	config.InitLogger()
 	if len(os.Args) == 1 {
-		printUsage()
+		printUsage(0)
 	}
 	action := os.Args[1]
 	var (
@@ -28,10 +28,6 @@ func main() {
 		addEntry(domain, gateway)
 		break
 
-	case "cleanup":
-		deleteAll()
-		break
-
 	case "delete":
 		deleteEntry(domain, gateway)
 		break
@@ -40,25 +36,45 @@ func main() {
 		keepEntry(domain, gateway)
 		break
 
+	case "purge":
+		deleteAll()
+		break
+
 	default:
-		printUsage()
+		printUsage(1)
 		break
 	}
 }
 
-func printUsage() {
-	log.Fatalln(`usage:
+func printUsage(code int) {
+	println(`DOMROUTE
+Usage:
+
+add:
+  Route traffic for a given domain via a destination gateway.
 
   domroute add <DOMAIN> <GATEWAY_IP>
   domroute add <DOMAIN> <INTERFACE_NAME>
 
+delete:
+  Delete a domain route added by this tool.
+
   domroute delete <DOMAIN> <GATEWAY_IP>
   domroute delete <DOMAIN> <INTERFACE_NAME>
+
+keep:
+  Periodically update resolution for domain and gateway,
+  routing traffic for a given domain via a destination gateway.
 
   domroute keep <DOMAIN> <GATEWAY_IP>
   domroute keep <DOMAIN> <INTERFACE_NAME>
 
-  domroute cleanup`)
+purge:
+  Remove all routes added by this tool.
+
+  domroute purge`)
+
+	os.Exit(code)
 }
 
 func addEntry(domain string, gateway string) {
