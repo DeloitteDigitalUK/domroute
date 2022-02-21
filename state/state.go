@@ -3,8 +3,8 @@ package state
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"path/filepath"

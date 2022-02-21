@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/pcornish/domroute/route"
 	"github.com/pcornish/domroute/state"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"os"
 	"regexp"
