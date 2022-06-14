@@ -4,7 +4,7 @@ Keeps the route table up to date for a domain's IP addresses.
 
 ## Install
 
-    go install github.com/pcornish/domroute@latest
+    go install github.com/DeloitteDigitalUK/domroute@main
 
 ## Usage:
 
