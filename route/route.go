@@ -2,9 +2,10 @@ package route
 
 import (
 	"fmt"
-	"github.com/pcornish/domroute/state"
+	"github.com/DeloitteDigitalUK/domroute/state"
 	log "github.com/sirupsen/logrus"
 	"net"
+	"net/netip"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -59,29 +60,64 @@ func EnsureExists(domain string, gateway string) error {
 }
 
 func getGatewayAddr(ipOrIface string) (net.IP, error) {
-	if matched, _ := regexp.MatchString(`^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$`, ipOrIface); matched {
+	// ipv4 address
+	if matched, _ := regexp.MatchString(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`, ipOrIface); matched {
 		return net.ParseIP(ipOrIface), nil
+	}
+	// ipv4 CIDR
+	var matchCidr bool
+	var network netip.Prefix
+	if matched, _ := regexp.MatchString(`^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$`, ipOrIface); matched {
+		n, err := netip.ParsePrefix(ipOrIface)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse network prefix: %s: %s", ipOrIface, err)
+		}
+		log.Tracef("parsed network prefix: %s", n.String())
+		network = n
+		matchCidr = true
 	}
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return nil, fmt.Errorf("could not list network interfaces: %s", err)
 	}
 	for _, iface := range interfaces {
-		if iface.Name != ipOrIface {
+		if !matchCidr && iface.Name != ipOrIface {
 			continue
 		}
 		addrs, err := iface.Addrs()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get addresses for interface: %s: %s", iface.Name, err)
 		} else if len(addrs) == 0 {
-			return nil, fmt.Errorf("no addresses for interface: %s", iface.Name)
+			if matchCidr {
+				log.Tracef("skipping interface %s with no addresses", iface.Name)
+				continue
+			} else {
+				return nil, fmt.Errorf("no addresses for interface: %s", iface.Name)
+			}
 		}
-		ip := addrs[0].String()
-		if strings.Contains(ip, "/") {
-			ip = strings.Split(ip, "/")[0]
+		if matchCidr {
+			for _, a := range addrs {
+				addr := a.String()
+				if strings.Contains(addr, "/") {
+					addr = strings.Split(addr, "/")[0]
+				}
+				ip, err := netip.ParseAddr(addr)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse interface address: %s: %s", addr, err)
+				}
+				if network.Contains(ip) {
+					log.Infof("found gateway %s with address %s matching CIDR %s", iface.Name, addr, ipOrIface)
+					return net.ParseIP(addr), nil
+				}
+			}
+		} else {
+			ip := addrs[0].String()
+			if strings.Contains(ip, "/") {
+				ip = strings.Split(ip, "/")[0]
+			}
+			log.Infof("resolved gateway interface %s to %s", ipOrIface, ip)
+			return net.ParseIP(ip), nil
 		}
-		log.Infof("resolved gateway interface %s to %s", ipOrIface, ip)
-		return net.ParseIP(ip), nil
 	}
 	return nil, fmt.Errorf("failed to resolve gateway: %s", ipOrIface)
 }

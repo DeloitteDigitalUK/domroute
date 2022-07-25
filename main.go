@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/pcornish/domroute/config"
-	"github.com/pcornish/domroute/route"
+	"github.com/DeloitteDigitalUK/domroute/config"
+	"github.com/DeloitteDigitalUK/domroute/route"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
@@ -54,12 +54,14 @@ add:
   Route traffic for a given domain via a destination gateway.
 
   domroute add <DOMAIN> <GATEWAY_IP>
+  domroute add <DOMAIN> <GATEWAY_CIDR>
   domroute add <DOMAIN> <INTERFACE_NAME>
 
 delete:
   Delete a domain route added by this tool.
 
   domroute delete <DOMAIN> <GATEWAY_IP>
+  domroute delete <DOMAIN> <GATEWAY_CIDR>
   domroute delete <DOMAIN> <INTERFACE_NAME>
 
 keep:
@@ -67,6 +69,7 @@ keep:
   routing traffic for a given domain via a destination gateway.
 
   domroute keep <DOMAIN> <GATEWAY_IP>
+  domroute keep <DOMAIN> <GATEWAY_CIDR>
   domroute keep <DOMAIN> <INTERFACE_NAME>
 
 purge:
