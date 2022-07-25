@@ -13,12 +13,14 @@ add:
   Route traffic for a given domain via a destination gateway.
 
   domroute add <DOMAIN> <GATEWAY_IP>
+  domroute add <DOMAIN> <GATEWAY_CIDR>
   domroute add <DOMAIN> <INTERFACE_NAME>
 
 delete:
   Delete a domain route added by this tool.
 
   domroute delete <DOMAIN> <GATEWAY_IP>
+  domroute delete <DOMAIN> <GATEWAY_CIDR>
   domroute delete <DOMAIN> <INTERFACE_NAME>
 
 keep:
@@ -26,6 +28,7 @@ keep:
   routing traffic for a given domain via a destination gateway.
 
   domroute keep <DOMAIN> <GATEWAY_IP>
+  domroute keep <DOMAIN> <GATEWAY_CIDR>
   domroute keep <DOMAIN> <INTERFACE_NAME>
 
 purge:
@@ -41,9 +44,9 @@ Resolves a domain to one or more IP addresses, then adds each IP to the route ta
 ```shell
 $ sudo domroute add example.com 10.0.0.1
 
-2022/01/25 14:37:54 resolved example.com to [34.117.59.81]
-2022/01/25 14:37:54 creating route 34.117.59.81->10.0.0.1
-2022/01/25 14:37:54 created route 34.117.59.81->10.0.0.1
+2022/01/25 14:37:54 resolved example.com to [12.34.56.78]
+2022/01/25 14:37:54 creating route 12.34.56.78->10.0.0.1
+2022/01/25 14:37:54 created route 12.34.56.78->10.0.0.1
 ```
 
 ### Using an interface name instead of a gateway IP
@@ -54,9 +57,22 @@ You can specify a network interface name, e.g. `utun3`, instead of an IP address
 $ sudo domroute add example.com utun3
 
 2022/01/25 14:37:54 resolved gateway interface utun3 to 10.0.0.1
-2022/01/25 14:37:54 resolved example.com to [34.117.59.81]
-2022/01/25 14:37:54 creating route 34.117.59.81->10.0.0.1
-2022/01/25 14:37:54 created route 34.117.59.81->10.0.0.1
+2022/01/25 14:37:54 resolved example.com to [12.34.56.78]
+2022/01/25 14:37:54 creating route 12.34.56.78->10.0.0.1
+2022/01/25 14:37:54 created route 12.34.56.78->10.0.0.1
+```
+
+### Using an interface CIDR instead of a gateway IP or name
+
+You can specify a network interface CIDR, e.g. `10.10.0.0/16`, instead of an IP address or name for the gateway:
+
+```shell
+$ sudo domroute add example.com 10.10.0.0/16
+
+2022/01/25 14:37:54 found gateway utun3 with address 10.10.123.123 matching CIDR 10.10.0.0/16
+2022/01/25 14:37:54 resolved example.com to [12.34.56.78]
+2022/01/25 14:37:54 creating route 12.34.56.78->10.10.123.123
+2022/01/25 14:37:54 created route 12.34.56.78->10.10.123.123
 ```
 
 ## Keep routes up to date for a domain
@@ -67,9 +83,9 @@ Same as above, but periodically repeats resolution and route table check.
 $ sudo domroute keep example.com 10.0.0.1
 
 2022/01/25 14:37:54 keeping example.com routed to 10.0.0.1 - checking every 60 seconds
-2022/01/25 14:37:54 resolved example.com to [34.117.59.81]
-2022/01/25 14:37:54 creating route 34.117.59.81->10.0.0.1
-2022/01/25 14:37:54 created route 34.117.59.81->10.0.0.1
+2022/01/25 14:37:54 resolved example.com to [12.34.56.78]
+2022/01/25 14:37:54 creating route 12.34.56.78->10.0.0.1
+2022/01/25 14:37:54 created route 12.34.56.78->10.0.0.1
 
 # ...repeats every 60 seconds
 ```
@@ -87,9 +103,9 @@ Resolves a domain to one or more IP addresses, then removes each IP/gateway comb
 ```shell
 $ sudo domroute delete example.com 10.0.0.1
 
-2022/01/25 14:37:41 resolved example.com to [34.117.59.81]
-2022/01/25 14:37:41 deleting route 34.117.59.81->10.0.0.1
-2022/01/25 14:37:41 deleted route 34.117.59.81->10.0.0.1
+2022/01/25 14:37:41 resolved example.com to [12.34.56.78]
+2022/01/25 14:37:41 deleting route 12.34.56.78->10.0.0.1
+2022/01/25 14:37:41 deleted route 12.34.56.78->10.0.0.1
 ```
 
 ## Delete all previously added routes
@@ -99,8 +115,8 @@ Removes all routes previously added to the route table by this tool.
 ```shell
 $ sudo domroute purge
 
-2022/01/25 14:37:41 deleting route 34.117.59.81->10.0.0.1
-2022/01/25 14:37:41 deleted route 34.117.59.81->10.0.0.1
+2022/01/25 14:37:41 deleting route 12.34.56.78->10.0.0.1
+2022/01/25 14:37:41 deleted route 12.34.56.78->10.0.0.1
 ```
 
 ## State
