@@ -81,7 +81,9 @@ purge:
 }
 
 func addEntry(domain string, gateway string) {
-	ensureExists(domain, gateway)
+	if err := route.EnsureExists(domain, gateway); err != nil {
+		log.Fatalf("failed to add entry %s for gateway %s: %s", domain, gateway, err)
+	}
 }
 
 func keepEntry(domain string, gateway string) {
@@ -90,22 +92,24 @@ func keepEntry(domain string, gateway string) {
 
 	ticker := time.NewTicker(checkInterval)
 	done := make(chan bool)
+	due := make(chan bool)
 
-	ensureExists(domain, gateway)
+	go func() {
+		for {
+			due <- true
+			<-ticker.C
+		}
+	}()
+
 	for {
 		select {
 		case <-done:
 			return
-		case <-ticker.C:
-			ensureExists(domain, gateway)
+		case <-due:
+			if err := route.EnsureExists(domain, gateway); err != nil {
+				log.Warnf("failed to ensure entry %s for gateway %s: %s - will retry", domain, gateway, err)
+			}
 		}
-	}
-}
-
-func ensureExists(domain string, gateway string) {
-	err := route.EnsureExists(domain, gateway)
-	if err != nil {
-		log.Fatalf("could not ensure entry exists: %s", err)
 	}
 }
 
